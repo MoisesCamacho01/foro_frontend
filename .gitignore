@@ -38,7 +38,13 @@ yarn-error.log
 testem.log
 /typings
 __screenshots__/
+/test-results/
+/playwright-report/
 
 # System files
 .DS_Store
 Thumbs.db
+
+.cursor/mcp.json
+documentation/qa-screenshots/
+documentation/stitch

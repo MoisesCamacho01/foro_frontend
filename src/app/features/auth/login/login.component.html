@@ -1,0 +1,215 @@
+<div class="min-h-screen flex flex-col antialiased selection:bg-primary/20 selection:text-primary bg-bg-main text-fg-main">
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-bg-card border-b border-[#F2F2F2] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div
+          class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-md shadow-primary/25 transition-transform hover:scale-105"
+        >
+          <i class="ph ph-chats-circle text-2xl font-bold" aria-hidden="true"></i>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-xl text-fg-main tracking-tight">ForumHub</span>
+          <span
+            class="text-xs px-2.5 py-0.5 rounded-full bg-info/15 text-[#0a8c91] font-medium border border-info/30"
+          >
+            Portal de Acceso
+          </span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-secondary/20 text-[#1f6b1a] border border-secondary/40 shadow-sm"
+        >
+          <span class="w-2 h-2 rounded-full bg-[#39ca2e] animate-pulse" aria-hidden="true"></span>
+          Servidor en línea
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-grow flex items-center justify-center min-h-[calc(100vh-120px)] p-6">
+    <div class="w-full max-w-md">
+      <div
+        class="bg-bg-card rounded-2xl p-8 sm:p-10 border border-border shadow-card transition-all duration-300 hover:shadow-xl"
+      >
+        <!-- Welcome -->
+        <div class="flex flex-col items-center text-center mb-8">
+          <div class="relative mb-4">
+            <div
+              class="w-20 h-20 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/25 shadow-inner"
+            >
+              <i class="ph ph-user-circle text-4xl" aria-hidden="true"></i>
+            </div>
+            <div
+              class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-secondary border-2 border-white flex items-center justify-center text-emerald-900 shadow-sm"
+            >
+              <i class="ph ph-check-bold text-xs" aria-hidden="true"></i>
+            </div>
+          </div>
+          <h1 class="text-2xl font-bold text-fg-main tracking-tight">¡Bienvenido a ForumHub!</h1>
+          <p class="text-sm text-gray-500 mt-1.5 leading-relaxed">
+            Ingresa tu alias para participar en las discusiones y réplicas de la comunidad.
+          </p>
+        </div>
+
+        <!-- Form -->
+        <form class="space-y-6" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-fg-main" for="username">
+              Ingresa un nombre de usuario
+            </label>
+            <div class="relative">
+              <div
+                class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400"
+              >
+                <i class="ph ph-at text-lg" aria-hidden="true"></i>
+              </div>
+              <input
+                #aliasInput
+                id="username"
+                type="text"
+                formControlName="alias"
+                autocomplete="off"
+                placeholder="Ingrese nombre de usuario"
+                class="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-bg-main focus:bg-white text-fg-main placeholder-gray-400 text-sm transition-all duration-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/20 hover:border-gray-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                [attr.aria-invalid]="showFieldError()"
+                [attr.aria-describedby]="showFieldError() ? 'error-feedback' : null"
+                [disabled]="isSubmitDisabled()"
+              />
+            </div>
+            @if (showFieldError()) {
+              <p
+                id="error-feedback"
+                class="text-xs text-danger flex items-center gap-1 mt-1 font-medium"
+                role="alert"
+              >
+                <i class="ph ph-warning-circle text-sm" aria-hidden="true"></i>
+                Por favor ingresa un nombre de usuario válido.
+              </p>
+            }
+          </div>
+
+          <button
+            type="submit"
+            class="w-full py-3.5 px-5 font-semibold text-sm rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2 group cursor-pointer disabled:cursor-wait"
+            [class.bg-primary]="uiState() !== 'success'"
+            [class.hover:bg-[#3b87ec]]="uiState() !== 'success'"
+            [class.shadow-primary/30]="uiState() !== 'success'"
+            [class.text-white]="uiState() !== 'success'"
+            [class.active:scale-[0.98]]="uiState() !== 'success'"
+            [class.bg-emerald-600]="uiState() === 'success'"
+            [class.opacity-90]="uiState() === 'loading'"
+            [disabled]="isSubmitDisabled()"
+            [attr.aria-busy]="uiState() === 'loading'"
+          >
+            @switch (uiState()) {
+              @case ('loading') {
+                <span>Validando acceso...</span>
+                <i class="ph ph-spinner animate-spin text-base" aria-hidden="true"></i>
+              }
+              @case ('success') {
+                <span>¡Bienvenido, {{ welcomeAlias() }}!</span>
+                <i class="ph ph-check-bold text-base" aria-hidden="true"></i>
+              }
+              @default {
+                <span>Acceder al foro</span>
+                <i
+                  class="ph ph-arrow-right font-bold transition-transform duration-200 group-hover:translate-x-1"
+                  aria-hidden="true"
+                ></i>
+              }
+            }
+          </button>
+        </form>
+
+        <!-- Success banner -->
+        @if (uiState() === 'success') {
+          <div
+            class="mt-6 p-4 rounded-xl bg-emerald-50 border border-secondary text-emerald-900 transition-all duration-300 transform scale-100 opacity-100"
+            role="status"
+            aria-live="polite"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-8 h-8 rounded-full bg-secondary text-emerald-950 flex items-center justify-center shrink-0"
+              >
+                <i class="ph ph-check-bold text-base font-bold" aria-hidden="true"></i>
+              </div>
+              <div class="text-xs">
+                <p class="font-bold text-emerald-950">¡Acceso verificado con éxito!</p>
+                <p class="text-emerald-800">
+                  Bienvenido @{{ welcomeAlias() }}. Tu sesión está lista para participar en el foro.
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Features -->
+        <div class="mt-8 pt-6 border-t border-border flex items-center justify-between text-xs text-gray-400">
+          <span class="flex items-center gap-1.5 hover:text-gray-600 transition-colors">
+            <i class="ph ph-shield-check text-info text-base" aria-hidden="true"></i>
+            Sin contraseña requerida
+          </span>
+          <span class="flex items-center gap-1.5 hover:text-gray-600 transition-colors">
+            <i class="ph ph-lightning text-warning text-base" aria-hidden="true"></i>
+            Acceso instantáneo
+          </span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-bg-card border-t border-[#F2F2F2] py-4">
+    <div
+      class="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-4 text-xs text-gray-500"
+    >
+      <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+        <span class="font-bold text-fg-main flex items-center gap-1.5">
+          <i class="ph ph-palette text-sm text-primary" aria-hidden="true"></i>
+          Paleta del Sistema:
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-full bg-bg-main border border-gray-300 shadow-xs inline-block"></span>
+          <span class="font-mono text-[11px] text-gray-600">#FCFCFC (Fondo)</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-full bg-fg-main inline-block"></span>
+          <span class="font-mono text-[11px] text-gray-600">#242424 (Texto)</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-full bg-bg-card border border-gray-300 shadow-xs inline-block"></span>
+          <span class="font-mono text-[11px] text-gray-600">#FFFFFF (Card)</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-full bg-primary shadow-xs inline-block"></span>
+          <span class="font-mono text-[11px] text-gray-600">#4F9AFF (Primary)</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-full bg-secondary border border-gray-300 shadow-xs inline-block"></span>
+          <span class="font-mono text-[11px] text-gray-600">#5BFF4F (Secondary)</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-full bg-danger inline-block"></span>
+          <span class="font-mono text-[11px] text-gray-600">#D60F1C (Danger)</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-full bg-info inline-block"></span>
+          <span class="font-mono text-[11px] text-gray-600">#14D9E0 (Info)</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-3 h-3 rounded-full bg-warning border border-gray-300 inline-block"></span>
+          <span class="font-mono text-[11px] text-gray-600">#EDE702 (Warning)</span>
+        </span>
+      </div>
+      <div class="flex items-center gap-3 text-gray-400">
+        <span class="text-xs">Sombra: <strong class="font-mono text-gray-600">#F2F2F2</strong></span>
+        <span aria-hidden="true">•</span>
+        <span>ForumHub v2.0</span>
+      </div>
+    </div>
+  </footer>
+</div>
