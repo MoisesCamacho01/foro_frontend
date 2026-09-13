@@ -1,0 +1,185 @@
+<article
+  class="custom-thread-card rounded-2xl p-7"
+  [class.animate-fade-in]="isUserQuestion()"
+  [id]="'question-card-' + thread().id"
+>
+  <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+    <div class="flex items-center gap-2">
+      @if (isUserQuestion()) {
+        <span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+          Nueva pregunta
+        </span>
+      } @else {
+        <span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-primary/15 text-[#2272dc]">
+          #DesarrolloWeb
+        </span>
+        <span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600">
+          Discusión Activa
+        </span>
+      }
+    </div>
+    <span class="text-xs text-gray-400 flex items-center gap-1">
+      <i class="ph ph-clock" aria-hidden="true"></i>
+      {{ thread().relativeLabel }}
+    </span>
+  </div>
+
+  <div class="space-y-4" [id]="thread().id === 'q1' ? 'main-question-block' : 'question-block-' + thread().id">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        @if (isUserQuestion()) {
+          <div
+            class="w-11 h-11 rounded-full bg-blue-100 text-primary flex items-center justify-center font-bold text-base border border-blue-300 shadow-sm"
+            aria-hidden="true"
+          >
+            {{ thread().author.initials }}
+          </div>
+        } @else {
+          <div
+            class="w-11 h-11 rounded-full bg-gradient-to-tr from-primary to-info text-white flex items-center justify-center font-bold text-base shadow-sm"
+            aria-hidden="true"
+          >
+            {{ thread().author.initials }}
+          </div>
+        }
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-fg-main text-sm">{{ thread().author.displayName }}</span>
+            <span class="text-[11px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">
+              Autor
+            </span>
+          </div>
+          <span class="text-xs text-gray-400">
+            {{ thread().author.handle }} • {{ thread().createdLabel }}
+          </span>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+        aria-label="Más opciones"
+      >
+        <i class="ph ph-dots-three-vertical text-lg" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="pl-14">
+      <p
+        class="text-base text-fg-main leading-relaxed font-medium"
+        [id]="questionTextId()"
+      >
+        {{ thread().body }}
+      </p>
+
+      <div class="mt-4 flex items-center flex-wrap gap-2 text-sm pt-2">
+        <button
+          type="button"
+          class="like-btn px-3 py-1.5 rounded-lg border border-gray-200 hover:border-primary hover:bg-blue-50 text-gray-600 font-medium text-xs flex items-center gap-1.5 transition-all"
+          [id]="'btn-like-' + thread().id"
+          title="Me gusta"
+          [class.like-active]="thread().votes.liked"
+          [attr.aria-pressed]="thread().votes.liked"
+          (click)="toggleLike()"
+        >
+          <i [class]="likeIconClass(thread().votes.liked) + ' text-sm'" aria-hidden="true"></i>
+          <span>Me gusta</span>
+        </button>
+        <button
+          type="button"
+          class="dislike-btn px-3 py-1.5 rounded-lg border border-gray-200 hover:border-danger hover:bg-red-50 text-gray-600 font-medium text-xs flex items-center gap-1.5 transition-all"
+          [id]="'btn-dislike-' + thread().id"
+          title="No me gusta"
+          [class.dislike-active]="thread().votes.disliked"
+          [attr.aria-pressed]="thread().votes.disliked"
+          (click)="toggleDislike()"
+        >
+          <i [class]="dislikeIconClass(thread().votes.disliked) + ' text-sm'" aria-hidden="true"></i>
+          <span>No me gusta</span>
+        </button>
+        <div class="flex items-center gap-1.5">
+          <div
+            class="flex items-center bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1 text-xs font-semibold gap-1.5 text-blue-700"
+          >
+            <i class="ph ph-thumbs-up text-xs" aria-hidden="true"></i>
+            <span>Me gusta:</span>
+            <span class="text-primary font-bold" [id]="'counter-' + thread().id + '-likes'">{{
+              thread().votes.likes
+            }}</span>
+          </div>
+          <div
+            class="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs font-semibold gap-1.5 text-gray-600"
+          >
+            <i class="ph ph-thumbs-down text-xs" aria-hidden="true"></i>
+            <span>No me gusta:</span>
+            <span class="text-danger font-bold" [id]="'counter-' + thread().id + '-dislikes'">{{
+              thread().votes.dislikes
+            }}</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="reply-trigger-btn ml-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-fg-main font-medium text-xs flex items-center gap-1.5 transition-all"
+          [attr.aria-expanded]="replyOpen()"
+          [attr.aria-controls]="'reply-box-' + thread().id"
+          (click)="toggleReply()"
+        >
+          <i class="ph ph-arrow-bend-up-left text-sm" aria-hidden="true"></i>
+          <span>Replicar</span>
+        </button>
+      </div>
+
+      <div
+        class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-xl transition-all"
+        [id]="'reply-box-' + thread().id"
+        [class.hidden]="!replyOpen()"
+      >
+        <div class="flex items-center gap-2">
+          <input
+            #replyField
+            class="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs text-fg-main focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-gray-400"
+            [id]="thread().id === 'q1' ? 'reply' : 'reply-input-' + thread().id"
+            placeholder="agregar replica"
+            type="text"
+            [value]="replyDraft()"
+            (input)="onReplyInput($event)"
+            (keydown.enter)="submitReply()"
+          />
+          <button
+            type="button"
+            class="px-4 py-2 bg-primary hover:bg-[#3884ea] text-white text-xs font-medium rounded-lg shadow-sm transition-all whitespace-nowrap flex items-center gap-1"
+            [id]="thread().id === 'q1' ? 'add_reply' : 'add-reply-' + thread().id"
+            (click)="submitReply()"
+          >
+            <i class="ph ph-paper-plane-right" aria-hidden="true"></i>
+            <span>Enviar réplica</span>
+          </button>
+        </div>
+      </div>
+
+      @if (replyCount() > 0) {
+        <div class="mt-8 pt-6 border-t border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <h4
+              class="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5"
+            >
+              <i class="ph ph-chats text-base" aria-hidden="true"></i>
+              <span>
+                Hilo de Respuestas (<span [id]="thread().id === 'q1' ? 'total-replies-count' : 'total-replies-count-' + thread().id">{{ replyCount() }}</span>)
+              </span>
+            </h4>
+            <span class="text-xs text-gray-400">Jerarquía escalonada</span>
+          </div>
+
+          <div
+            class="space-y-4"
+            [id]="thread().id === 'q1' ? 'replies-tree' : 'replies-tree-' + thread().id"
+          >
+            @for (reply of thread().children; track reply.id) {
+              <app-comment-node [comment]="reply" />
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</article>

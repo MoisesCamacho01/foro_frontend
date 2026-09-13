@@ -1,4 +1,15 @@
-import { Component, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import {
+  Component,
+  DestroyRef,
+  ElementRef,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import {
   FormBuilder,
   FormControl,
@@ -13,6 +24,8 @@ interface LoginForm {
 
 type LoginUiState = 'idle' | 'loading' | 'success' | 'error';
 
+const FORUM_REDIRECT_MS = 1800;
+
 @Component({
   selector: 'app-login',
   imports: [ReactiveFormsModule],
@@ -21,6 +34,9 @@ type LoginUiState = 'idle' | 'loading' | 'success' | 'error';
 export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly title = inject(Title);
 
   protected readonly aliasInput = viewChild<ElementRef<HTMLInputElement>>('aliasInput');
 
@@ -33,9 +49,16 @@ export class LoginComponent implements OnInit {
   protected readonly uiState = signal<LoginUiState>('idle');
   protected readonly showFieldError = signal(false);
   protected readonly welcomeAlias = signal('');
+  private redirectTimer: ReturnType<typeof setTimeout> | undefined;
 
   ngOnInit(): void {
+    this.title.setTitle('ForumHub - Iniciar Sesión');
     setTimeout(() => this.aliasInput()?.nativeElement.focus());
+    this.destroyRef.onDestroy(() => {
+      if (this.redirectTimer !== undefined) {
+        clearTimeout(this.redirectTimer);
+      }
+    });
   }
 
   protected onSubmit(): void {
@@ -55,19 +78,29 @@ export class LoginComponent implements OnInit {
     this.showFieldError.set(false);
     this.uiState.set('loading');
 
-    this.authService.login({ alias }).subscribe({
-      next: (response) => {
-        this.welcomeAlias.set(response.alias);
-        this.uiState.set('success');
-      },
-      error: () => {
-        this.uiState.set('error');
-        this.showFieldError.set(true);
-      },
-    });
+    this.authService
+      .login({ alias })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.welcomeAlias.set(response.alias);
+          this.uiState.set('success');
+          this.scheduleForumRedirect();
+        },
+        error: () => {
+          this.uiState.set('error');
+          this.showFieldError.set(true);
+        },
+      });
   }
 
   protected isSubmitDisabled(): boolean {
     return this.uiState() === 'loading' || this.uiState() === 'success';
+  }
+
+  private scheduleForumRedirect(): void {
+    this.redirectTimer = setTimeout(() => {
+      void this.router.navigate(['/foro']);
+    }, FORUM_REDIRECT_MS);
   }
 }

@@ -2,6 +2,8 @@
 
 Implementación de la vista **"Vista de Login - Foro de Comentarios"** del proyecto Stitch **"Aplicación Foro Comentarios Interactivos"** en Angular 22 con Tailwind CSS.
 
+Siguiente vista: [Vista de Comentarios y Discusión - ForumHub](./README-comentarios.md) (tareas 10–20).
+
 ## Proyecto Stitch
 
 | Campo | Valor |

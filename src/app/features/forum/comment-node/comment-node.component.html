@@ -1,0 +1,111 @@
+<div
+  class="relative pl-6 thread-line"
+  [class.ml-8]="comment().level > 1"
+  [class.mt-3]="comment().level > 1"
+  [class.animate-fade-in]="comment().origin === 'user'"
+  [id]="'comment-' + comment().id"
+>
+  <div [class]="cardClasses()">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2.5">
+        <div [class]="avatarClasses()" aria-hidden="true">
+          {{ comment().author.initials }}
+        </div>
+        <div>
+          <span class="font-semibold text-xs text-fg-main">{{ comment().author.displayName }}</span>
+          <span class="text-[10px] text-gray-400 ml-1">{{ comment().createdLabel }}</span>
+        </div>
+      </div>
+      <span [class]="badgeClasses()">{{ comment().badge }}</span>
+    </div>
+
+    <p class="text-xs text-fg-main leading-relaxed mb-3">{{ comment().body }}</p>
+
+    <div class="flex items-center flex-wrap gap-2 text-xs">
+      <button
+        type="button"
+        class="like-btn px-2.5 py-1 rounded-md border border-gray-200 hover:border-primary text-gray-600 text-[11px] flex items-center gap-1 transition-all"
+        [class.like-active]="comment().votes.liked"
+        [id]="'btn-like-' + comment().id"
+        [attr.aria-pressed]="comment().votes.liked"
+        title="Me gusta"
+        (click)="toggleLike()"
+      >
+        <i [class]="likeIconClass(comment().votes.liked)" aria-hidden="true"></i>
+        <span>Me gusta</span>
+      </button>
+      <button
+        type="button"
+        class="dislike-btn px-2.5 py-1 rounded-md border border-gray-200 hover:border-danger text-gray-600 text-[11px] flex items-center gap-1 transition-all"
+        [class.dislike-active]="comment().votes.disliked"
+        [id]="'btn-dislike-' + comment().id"
+        [attr.aria-pressed]="comment().votes.disliked"
+        title="No me gusta"
+        (click)="toggleDislike()"
+      >
+        <i [class]="dislikeIconClass(comment().votes.disliked)" aria-hidden="true"></i>
+        <span>No me gusta</span>
+      </button>
+      <div class="flex items-center gap-1 text-[11px] font-semibold">
+        <div
+          class="bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5 text-blue-700 flex items-center gap-1"
+        >
+          <i class="ph ph-thumbs-up" aria-hidden="true"></i>
+          <span
+            class="text-primary font-bold"
+            [id]="'counter-' + comment().id + '-likes'"
+          >{{ comment().votes.likes }}</span>
+        </div>
+        <div
+          class="bg-gray-50 border border-gray-200 rounded px-1.5 py-0.5 text-gray-600 flex items-center gap-1"
+        >
+          <i class="ph ph-thumbs-down" aria-hidden="true"></i>
+          <span
+            class="text-danger font-bold"
+            [id]="'counter-' + comment().id + '-dislikes'"
+          >{{ comment().votes.dislikes }}</span>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="reply-trigger-btn px-2.5 py-1 rounded-md bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 text-[11px] flex items-center gap-1"
+        [attr.aria-expanded]="replyOpen()"
+        [attr.aria-controls]="'reply-box-' + comment().id"
+        (click)="toggleReply()"
+      >
+        <i class="ph ph-arrow-bend-up-left" aria-hidden="true"></i>
+        <span>Replicar</span>
+      </button>
+    </div>
+
+    <div
+      class="mt-3 pt-2 border-t border-gray-200"
+      [class.hidden]="!replyOpen()"
+      [id]="'reply-box-' + comment().id"
+    >
+      <div class="flex items-center gap-2">
+        <input
+          #replyField
+          class="flex-1 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs text-fg-main focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400"
+          [id]="'reply-input-' + comment().id"
+          placeholder="agregar replica"
+          type="text"
+          [value]="replyDraft()"
+          (input)="onReplyInput($event)"
+          (keydown.enter)="submitReply()"
+        />
+        <button
+          type="button"
+          class="px-3 py-1.5 bg-primary hover:bg-[#3884ea] text-white text-xs font-medium rounded-lg shadow-sm"
+          (click)="submitReply()"
+        >
+          Responder
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @for (child of comment().children; track child.id) {
+    <app-comment-node [comment]="child" />
+  }
+</div>
