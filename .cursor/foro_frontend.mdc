@@ -1,0 +1,60 @@
+---
+description: Reglas generales para el proyecto foro_frontend.mdc
+alwaysApply: true
+---
+
+# Reglas del proyecto
+
+- Usar typescript
+- Usar tipado estricto siempre que sea posible.
+- Utiliza documentacion para la vercion 22.1.8 de angular cli
+- Utiliza buenas practicas de estructura de carpetas para proyectos en angular
+- Utiliza las mejores practicas de codigo limpio
+- Utiliza @src/ para importar los modulos o componentes
+
+# Reglas del diseño
+
+- Utiliza el mcp de stitch para realizar el diseño de interfaces
+- El diseño en angular tiene que ser igual al diseño que esta en stitch
+- Usar tailwind para el diseño
+- Utilizar buenas practicas de diseño front-end
+- No intentes levantar el proyecto ya que el proyecto ya esta corriendo por este puerto 4200
+- Si necesitas borrar cache apaga el proyecto en el puerto 4200 y ejecuta el comando "pnpm start"
+- para ejecutar el proyecto tienes que hacerlo con este comando "pnpm dev"
+
+# Reglas para realizar commits
+
+- Nunca realices "git add ." en cambio usa git add nombre_del_ficher
+- El commit tiene que ser claro y en español
+- Utiliza los prefijos de git para subir los commits:
+    - feat: Una nueva característica para el usuario.
+    - fix: Arregla un bug que afecta al usuario.
+    - perf: Cambios que mejoran el rendimiento del sitio.
+    - build: Cambios en el sistema de build, tareas de despliegue o instalación.
+    - ci: Cambios en la integración continua.
+    - docs: Cambios en la documentación.
+    - refactor: Refactorización del código como cambios de nombre de variables o funciones.
+    - style: Cambios de formato, tabulaciones, espacios o puntos y coma, etc; no afectan al usuario.
+    - test: Añade tests o refactoriza uno existente.
+
+# Reglas para realizar pruebas de QA
+
+- Utiliza el mcp Playwright para realizar pruebas
+- las pruebas de QA tambien tienen que comparar el diseño con stitch
+- Todas las pruebas de QA se deben guardar en un resumen dentro de la carpeta /documentation
+- Se estricto con las pruebas de QA
+- Si la prueba de QA no son satisfactorias vuelve a analizar la propuesta en stitch y realiza las correcciones necesarias.
+
+# Reglas de documentacion frontend
+
+- Realiza la documentacion una vez que las pruebas de QA finalizaran satisfactoriamente
+- Todos los cambios que se realicen en el proyecto tiene que estar documentados en la carpeta documentation/{idCommit} con el siguiente formato idCommit_fecha.md
+- Los documentos creados tienen que tener diagramas explicativos del proceso y ajustes que se realizaron
+
+# Reglas para crear las tareas
+
+- Analiza la propuesta grafica antes de empezar a desarrollar
+- Separa la propuesta en pequeñas tareas realizables
+- Crea todas las tareas en la carpeta /task/
+- Ordena las tareas por dificultad
+
