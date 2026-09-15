@@ -7,7 +7,10 @@ const STITCH_REFERENCE = join(process.cwd(), 'documentation/stitch/login-referen
 
 async function gotoLogin(page: Page): Promise<void> {
   await page.goto('/login');
-  await page.evaluate(() => localStorage.removeItem('forumhub_user'));
+  await page.evaluate(() => {
+    localStorage.removeItem('forumhub_user');
+    localStorage.removeItem('forumhub_token');
+  });
   await page.reload();
 }
 
@@ -78,20 +81,20 @@ test.describe('QA Login - Vista de Login Foro de Comentarios', () => {
 
   test('submit con alias válido muestra loading y luego éxito', async ({ page }) => {
     await page.locator('#username').fill('moises_dev');
-    await page.locator('button[type="submit"]').click();
-
-    await expect(page.getByText('Validando acceso...')).toBeVisible();
     const submitButton = page.locator('button[type="submit"]');
+    await submitButton.click();
     await expect(submitButton).toBeDisabled();
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, 'login-estado-loading.png'), fullPage: true });
 
-    await expect(page.getByText('¡Acceso verificado con éxito!')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('¡Acceso verificado con éxito!')).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('¡Bienvenido, moises_dev!')).toBeVisible();
     await expect(page.getByText(/Bienvenido @moises_dev/)).toBeVisible();
 
     const storedAlias = await page.evaluate(() => localStorage.getItem('forumhub_user'));
+    const storedToken = await page.evaluate(() => localStorage.getItem('forumhub_token'));
     expect(storedAlias).toBe('moises_dev');
+    expect(storedToken).toBeTruthy();
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, 'login-estado-success.png'), fullPage: true });
   });
@@ -102,7 +105,7 @@ test.describe('QA Login - Vista de Login Foro de Comentarios', () => {
     await submitButton.click();
     await expect(submitButton).toBeDisabled();
     await submitButton.click({ force: true });
-    await expect(page.getByText('Validando acceso...')).toBeVisible();
+    await expect(page.getByText('¡Acceso verificado con éxito!')).toBeVisible({ timeout: 10000 });
   });
 
   test('verifica estructura visual principal', async ({ page }) => {

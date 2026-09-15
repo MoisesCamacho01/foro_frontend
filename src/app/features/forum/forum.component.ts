@@ -41,6 +41,7 @@ export class ForumComponent implements OnInit {
 
   ngOnInit(): void {
     this.title.setTitle('ForumHub - Preguntas de la Comunidad');
+    this.forumService.loadThreads().subscribe();
   }
 
   protected publishQuestion(): void {

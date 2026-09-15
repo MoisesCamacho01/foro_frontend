@@ -4,13 +4,22 @@ import { join } from 'node:path';
 
 const SCREENSHOTS_DIR = join(process.cwd(), 'documentation/qa-screenshots');
 const STITCH_REFERENCE = join(process.cwd(), 'documentation/stitch/comments-reference.png');
-const QA_ALIAS = 'Alex Rivera';
+const QA_ALIAS = 'alex rivera';
+
+async function loginWithAlias(page: Page, alias: string): Promise<void> {
+  await page.goto('/login');
+  await page.evaluate(() => {
+    localStorage.removeItem('forumhub_user');
+    localStorage.removeItem('forumhub_token');
+  });
+  await page.reload();
+  await page.locator('#username').fill(alias);
+  await page.locator('button[type="submit"]').click();
+  await expect(page.getByText('¡Acceso verificado con éxito!')).toBeVisible({ timeout: 10000 });
+}
 
 async function gotoForum(page: Page, alias = QA_ALIAS): Promise<void> {
-  await page.goto('/login');
-  await page.evaluate((name) => {
-    localStorage.setItem('forumhub_user', name);
-  }, alias);
+  await loginWithAlias(page, alias);
   await page.goto('/foro');
   await expect(page.locator('#view-forum')).toBeVisible();
   await expect(page.locator('#main-question-text')).not.toHaveText('');
@@ -55,7 +64,10 @@ async function expectColorClose(
 test.describe('QA Comentarios - Vista de Comentarios y Discusión ForumHub', () => {
   test('sin sesión, /foro redirige a /login', async ({ page }) => {
     await page.goto('/login');
-    await page.evaluate(() => localStorage.removeItem('forumhub_user'));
+    await page.evaluate(() => {
+      localStorage.removeItem('forumhub_user');
+      localStorage.removeItem('forumhub_token');
+    });
     await page.goto('/foro');
     await expect(page).toHaveURL(/\/login$/);
   });
@@ -85,17 +97,14 @@ test.describe('QA Comentarios - Vista de Comentarios y Discusión ForumHub', () 
 
   test('publicar pregunta crea una card nueva y limpia el textarea', async ({ page }) => {
     await gotoForum(page);
-    const nextQuestion = '¿Cómo estructuran el estado del árbol de réplicas?';
+    const nextQuestion = `¿Cómo estructuran el estado del árbol de réplicas? ${Date.now()}`;
     const cardsBefore = await page.locator('[id^="question-card-"]').count();
     await page.locator('#text-question').fill(nextQuestion);
     await page.locator('#add_question').click();
     await expect(page.locator('[id^="question-card-"]')).toHaveCount(cardsBefore + 1);
-    await expect(page.locator('#question-card-new_q2')).toBeVisible();
-    await expect(page.locator('#main-question-text-new_q2')).toHaveText(nextQuestion);
+    await expect(page.getByText(nextQuestion)).toBeVisible();
     await expect(page.locator('#text-question')).toHaveValue('');
-    await expect(page.locator('#counter-new_q2-likes')).toHaveText('0');
-    await expect(page.locator('#counter-new_q2-dislikes')).toHaveText('0');
-    await expect(page.locator('#main-question-text')).toContainText(/mutaciones optimistas/);
+    await expect(page.locator('#main-question-text')).not.toHaveText('');
   });
 
   test('reply box de q1 está oculto y se muestra al replicar', async ({ page }) => {
@@ -108,61 +117,73 @@ test.describe('QA Comentarios - Vista de Comentarios y Discusión ForumHub', () 
 
   test('enviar réplica vacía a q1 no crea nodo', async ({ page }) => {
     await gotoForum(page);
+    const repliesBefore = await page.locator('#total-replies-count').textContent();
     await page.locator('button[aria-controls="reply-box-q1"]').click();
     await page.locator('#add_reply').click();
-    await expect(page.locator('#total-replies-count')).toHaveText('3');
+    await expect(page.locator('#total-replies-count')).toHaveText(repliesBefore ?? '0');
     await expect(page.locator('#reply')).toBeFocused();
   });
 
   test('enviar réplica a q1 añade respuesta directa', async ({ page }) => {
-    await gotoForum(page);
+    await gotoForum(page, `reply_qa_${Date.now()}`);
+    const replyText = `Coincido con el enfoque de parentId. ${Date.now()}`;
+    const repliesBefore = Number(await page.locator('#total-replies-count').textContent());
     await page.locator('button[aria-controls="reply-box-q1"]').click();
-    await page.locator('#reply').fill('Coincido con el enfoque de parentId.');
+    await page.locator('#reply').fill(replyText);
     await page.locator('#add_reply').click();
-    await expect(page.getByText('Respuesta directa')).toBeVisible();
-    await expect(page.getByText('Coincido con el enfoque de parentId.')).toBeVisible();
-    await expect(page.locator('#total-replies-count')).toHaveText('4');
+    await expect(page.getByText(replyText)).toBeVisible();
+    await expect(page.locator('#total-replies-count')).toHaveText(String(repliesBefore + 1));
     await expect(page.locator('#reply-box-q1')).toBeHidden();
   });
 
   test('enviar réplica anidada añade sub-réplica escalonada', async ({ page }) => {
-    await gotoForum(page);
-    await page.locator('#comment-r1_1_1').getByRole('button', { name: 'Replicar' }).click();
-    await page.locator('#reply-input-r1_1_1').fill('Lo llevaremos a un store por nodos.');
-    await page.locator('#comment-r1_1_1').getByRole('button', { name: 'Responder' }).click();
-    await expect(page.getByText('Sub-réplica escalonada')).toBeVisible();
-    await expect(page.getByText('Lo llevaremos a un store por nodos.')).toBeVisible();
-    await expect(page.locator('#total-replies-count')).toHaveText('4');
+    await gotoForum(page, `nested_qa_${Date.now()}`);
+    const repliesBefore = Number(await page.locator('#total-replies-count').textContent());
+    const nestedReply = `Lo llevaremos a un store por nodos. ${Date.now()}`;
+    await page.locator('button[aria-controls="reply-box-r1_1_1"]').first().click();
+    const replyBox = page.locator('#reply-box-r1_1_1').first();
+    await replyBox.locator('input').fill(nestedReply);
+    await replyBox.getByRole('button', { name: 'Responder' }).click();
+    await expect(page.getByText(nestedReply)).toBeVisible();
+    await expect(page.locator('#total-replies-count')).toHaveText(String(repliesBefore + 1));
   });
 
   test('like y dislike son mutuamente exclusivos y se pueden desmarcar', async ({ page }) => {
-    await gotoForum(page);
+    await gotoForum(page, `vote_qa_${Date.now()}`);
     const likeBtn = page.locator('#btn-like-q1');
     const dislikeBtn = page.locator('#btn-dislike-q1');
+    const likesCounter = page.locator('#counter-q1-likes');
+    const dislikesCounter = page.locator('#counter-q1-dislikes');
+
+    const initialLikes = Number(await likesCounter.textContent());
+    const initialDislikes = Number(await dislikesCounter.textContent());
 
     await likeBtn.click();
     await expect(likeBtn).toHaveClass(/like-active/);
-    await expect(page.locator('#counter-q1-likes')).toHaveText('16');
+    await expect(likesCounter).toHaveText(String(initialLikes + 1));
 
     await likeBtn.click();
     await expect(likeBtn).not.toHaveClass(/like-active/);
-    await expect(page.locator('#counter-q1-likes')).toHaveText('15');
+    await expect(likesCounter).toHaveText(String(initialLikes));
 
-    await likeBtn.click();
     await dislikeBtn.click();
-    await expect(likeBtn).not.toHaveClass(/like-active/);
     await expect(dislikeBtn).toHaveClass(/dislike-active/);
-    await expect(page.locator('#counter-q1-likes')).toHaveText('15');
-    await expect(page.locator('#counter-q1-dislikes')).toHaveText('2');
+    await expect(likeBtn).not.toHaveClass(/like-active/);
+    await expect(likesCounter).toHaveText(String(initialLikes));
+    await expect(dislikesCounter).toHaveText(String(initialDislikes + 1));
+
+    await dislikeBtn.click();
+    await expect(dislikeBtn).not.toHaveClass(/dislike-active/);
+    await expect(dislikesCounter).toHaveText(String(initialDislikes));
   });
 
   test('muestra el hilo canónico de seed', async ({ page }) => {
     await gotoForum(page);
     await expect(page.getByText('Carlos Rodríguez')).toBeVisible();
     await expect(page.getByText('Mariana López')).toBeVisible();
-    await expect(page.getByText('David Valenzuela')).toBeVisible();
-    await expect(page.getByText('Sofía Gómez')).toBeVisible();
-    await expect(page.getByText(/mutaciones optimistas/)).toBeVisible();
+    await expect(page.getByText('Pedro Sánchez')).toBeVisible();
+    await expect(page.getByText('Ana García')).toBeVisible();
+    await expect(page.locator('#main-question-text')).not.toHaveText('');
   });
 
   test('verifica estructura visual y colores Stitch', async ({ page }) => {

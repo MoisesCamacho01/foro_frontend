@@ -21,6 +21,7 @@ alwaysApply: true
 - No intentes levantar el proyecto ya que el proyecto ya esta corriendo por este puerto 4200
 - Si necesitas borrar cache apaga el proyecto en el puerto 4200 y ejecuta el comando "pnpm start"
 - para ejecutar el proyecto tienes que hacerlo con este comando "pnpm dev"
+- si stitch no esta disponible para el proceso 
 
 # Reglas para realizar commits
 

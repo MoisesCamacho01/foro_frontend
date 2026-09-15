@@ -1,18 +1,18 @@
-import { Injectable } from '@angular/core';
-import { Observable, delay, map, of, throwError } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
+import { AuthApiAdapter } from '@src/app/core/adapters/auth-api.adapter';
+import type { LoginRequest, LoginResponse } from '@src/app/core/models/auth.model';
 
-export interface LoginRequest {
-  alias: string;
-}
+export type { LoginRequest, LoginResponse } from '@src/app/core/models/auth.model';
 
-export interface LoginResponse {
-  alias: string;
-}
-
-const STORAGE_KEY = 'forumhub_user';
+const USER_STORAGE_KEY = 'forumhub_user';
+const TOKEN_STORAGE_KEY = 'forumhub_token';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly authApi = inject(AuthApiAdapter);
+
   login(credentials: LoginRequest): Observable<LoginResponse> {
     const alias = credentials.alias.trim();
 
@@ -20,24 +20,46 @@ export class AuthService {
       return throwError(() => new Error('Alias requerido'));
     }
 
-    return of({ alias }).pipe(
-      delay(600),
-      map((response) => {
-        localStorage.setItem(STORAGE_KEY, response.alias);
-        return response;
-      }),
+    return this.authApi.login({ alias }).pipe(
+      tap((response) => this.persistSession(response)),
+      catchError((error) => throwError(() => error)),
     );
   }
 
   getStoredAlias(): string | null {
-    return localStorage.getItem(STORAGE_KEY);
+    return localStorage.getItem(USER_STORAGE_KEY);
+  }
+
+  getStoredToken(): string | null {
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
   }
 
   isAuthenticated(): boolean {
-    return this.getStoredAlias() !== null;
+    return this.getStoredAlias() !== null && this.getStoredToken() !== null;
   }
 
   logout(): void {
-    localStorage.removeItem(STORAGE_KEY);
+    if (!this.getStoredToken()) {
+      this.clearSession();
+      return;
+    }
+
+    this.authApi.logout().subscribe({
+      complete: () => this.clearSession(),
+      error: () => this.clearSession(),
+    });
+  }
+
+  clearSession(): void {
+    localStorage.removeItem(USER_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
+
+  private persistSession(response: LoginResponse): void {
+    localStorage.setItem(USER_STORAGE_KEY, response.alias);
+
+    if (response.token) {
+      localStorage.setItem(TOKEN_STORAGE_KEY, response.token);
+    }
   }
 }
