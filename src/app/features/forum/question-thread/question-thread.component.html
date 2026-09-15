@@ -116,18 +116,21 @@
             }}</span>
           </div>
         </div>
-        <button
-          type="button"
-          class="reply-trigger-btn ml-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-fg-main font-medium text-xs flex items-center gap-1.5 transition-all"
-          [attr.aria-expanded]="replyOpen()"
-          [attr.aria-controls]="'reply-box-' + thread().id"
-          (click)="toggleReply()"
-        >
-          <i class="ph ph-arrow-bend-up-left text-sm" aria-hidden="true"></i>
-          <span>Replicar</span>
-        </button>
+        @if (canReply()) {
+          <button
+            type="button"
+            class="reply-trigger-btn ml-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-fg-main font-medium text-xs flex items-center gap-1.5 transition-all"
+            [attr.aria-expanded]="replyOpen()"
+            [attr.aria-controls]="'reply-box-' + thread().id"
+            (click)="toggleReply()"
+          >
+            <i class="ph ph-arrow-bend-up-left text-sm" aria-hidden="true"></i>
+            <span>Replicar</span>
+          </button>
+        }
       </div>
 
+      @if (canReply()) {
       <div
         class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-xl transition-all"
         [id]="'reply-box-' + thread().id"
@@ -155,6 +158,7 @@
           </button>
         </div>
       </div>
+      }
 
       @if (replyCount() > 0) {
         <div class="mt-8 pt-6 border-t border-gray-100">

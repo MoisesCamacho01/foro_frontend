@@ -1,6 +1,7 @@
-import { Component, ElementRef, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, ElementRef, inject, input, signal, viewChild } from '@angular/core';
 import { userFromAlias, type ForumComment } from '@src/app/core/models/forum.model';
 import { AuthService } from '@src/app/core/services/auth.service';
+import { ConfigService } from '@src/app/core/services/config.service';
 import { ForumService } from '@src/app/core/services/forum.service';
 
 @Component({
@@ -11,12 +12,16 @@ import { ForumService } from '@src/app/core/services/forum.service';
 export class CommentNodeComponent {
   private readonly forumService = inject(ForumService);
   private readonly authService = inject(AuthService);
+  private readonly configService = inject(ConfigService);
 
   readonly comment = input.required<ForumComment>();
 
   protected readonly replyOpen = signal(false);
   protected readonly replyDraft = signal('');
   protected readonly replyInput = viewChild<ElementRef<HTMLInputElement>>('replyField');
+  protected readonly canReply = computed(() =>
+    this.configService.canReplyAtLevel(this.comment().level),
+  );
 
   protected toggleReply(): void {
     const willOpen = !this.replyOpen();
@@ -28,6 +33,10 @@ export class CommentNodeComponent {
   }
 
   protected submitReply(): void {
+    if (!this.canReply()) {
+      return;
+    }
+
     const inputEl = this.replyInput()?.nativeElement;
     const text = this.replyDraft().trim();
 

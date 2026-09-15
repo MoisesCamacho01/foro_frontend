@@ -8,6 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { AuthService } from '@src/app/core/services/auth.service';
+import { ConfigService } from '@src/app/core/services/config.service';
 import { ForumService } from '@src/app/core/services/forum.service';
 import { userFromAlias } from '@src/app/core/models/forum.model';
 import { QuestionThreadComponent } from '@src/app/features/forum/question-thread/question-thread.component';
@@ -24,6 +25,7 @@ interface QuestionForm {
 export class ForumComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
+  private readonly configService = inject(ConfigService);
   private readonly forumService = inject(ForumService);
   private readonly title = inject(Title);
 
@@ -41,6 +43,7 @@ export class ForumComponent implements OnInit {
 
   ngOnInit(): void {
     this.title.setTitle('ForumHub - Preguntas de la Comunidad');
+    this.configService.loadConfig().subscribe();
     this.forumService.loadThreads().subscribe();
   }
 

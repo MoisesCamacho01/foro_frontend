@@ -9,9 +9,14 @@ export interface ForumEndpoints {
   vote: (commentId: string) => string;
 }
 
+export interface ConfigEndpoints {
+  config: string;
+}
+
 export interface ApiEndpoints {
   auth: AuthEndpoints;
   forum: ForumEndpoints;
+  config: ConfigEndpoints;
 }
 
 export const API_ENDPOINTS: ApiEndpoints = {
@@ -23,5 +28,8 @@ export const API_ENDPOINTS: ApiEndpoints = {
     questions: '/questions',
     comments: '/comments',
     vote: (commentId: string) => `/comments/${commentId}/vote`,
+  },
+  config: {
+    config: '/config',
   },
 };

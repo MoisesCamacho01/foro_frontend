@@ -1,5 +1,6 @@
 import { Component, computed, ElementRef, inject, input, signal, viewChild } from '@angular/core';
 import { AuthService } from '@src/app/core/services/auth.service';
+import { ConfigService } from '@src/app/core/services/config.service';
 import { ForumService } from '@src/app/core/services/forum.service';
 import { countReplies, userFromAlias, type ForumComment } from '@src/app/core/models/forum.model';
 import { CommentNodeComponent } from '@src/app/features/forum/comment-node/comment-node.component';
@@ -12,6 +13,7 @@ import { CommentNodeComponent } from '@src/app/features/forum/comment-node/comme
 export class QuestionThreadComponent {
   private readonly forumService = inject(ForumService);
   private readonly authService = inject(AuthService);
+  private readonly configService = inject(ConfigService);
 
   readonly thread = input.required<ForumComment>();
 
@@ -19,6 +21,9 @@ export class QuestionThreadComponent {
   protected readonly replyOpen = signal(false);
   protected readonly replyDraft = signal('');
   protected readonly replyCount = computed(() => countReplies(this.thread()));
+  protected readonly canReply = computed(() =>
+    this.configService.canReplyAtLevel(this.thread().level),
+  );
 
   protected toggleReply(): void {
     const willOpen = !this.replyOpen();
@@ -30,6 +35,10 @@ export class QuestionThreadComponent {
   }
 
   protected submitReply(): void {
+    if (!this.canReply()) {
+      return;
+    }
+
     const inputEl = this.replyInput()?.nativeElement;
     const text = this.replyDraft().trim();
 

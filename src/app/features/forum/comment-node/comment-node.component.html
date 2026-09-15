@@ -66,18 +66,21 @@
           >{{ comment().votes.dislikes }}</span>
         </div>
       </div>
-      <button
-        type="button"
-        class="reply-trigger-btn px-2.5 py-1 rounded-md bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 text-[11px] flex items-center gap-1"
-        [attr.aria-expanded]="replyOpen()"
-        [attr.aria-controls]="'reply-box-' + comment().id"
-        (click)="toggleReply()"
-      >
-        <i class="ph ph-arrow-bend-up-left" aria-hidden="true"></i>
-        <span>Replicar</span>
-      </button>
+      @if (canReply()) {
+        <button
+          type="button"
+          class="reply-trigger-btn px-2.5 py-1 rounded-md bg-white border border-gray-200 hover:bg-gray-100 text-gray-700 text-[11px] flex items-center gap-1"
+          [attr.aria-expanded]="replyOpen()"
+          [attr.aria-controls]="'reply-box-' + comment().id"
+          (click)="toggleReply()"
+        >
+          <i class="ph ph-arrow-bend-up-left" aria-hidden="true"></i>
+          <span>Replicar</span>
+        </button>
+      }
     </div>
 
+    @if (canReply()) {
     <div
       class="mt-3 pt-2 border-t border-gray-200"
       [class.hidden]="!replyOpen()"
@@ -103,6 +106,7 @@
         </button>
       </div>
     </div>
+    }
   </div>
 
   @for (child of comment().children; track child.id) {
